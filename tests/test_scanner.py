@@ -89,3 +89,29 @@ def test_scanner_step3_appdata_skips_small(tmp_path):
     # AppData Local (total) threshold is 0.1 GB — tiny file is below it
     names = [e[0] for e in entries]
     assert "AppData Local (total)" not in names
+
+
+def test_scanner_step4_games_programs(tmp_path):
+    # Simulate a Programs subfolder under AppData\Local\Programs
+    progs = tmp_path / "AppData" / "Local" / "Programs"
+    app_dir = progs / "MyApp"
+    app_dir.mkdir(parents=True)
+    # Write 1 GB worth of data (1 file × 1 GB)
+    (app_dir / "data.bin").write_bytes(b"x" * (1024 ** 3))
+
+    calls = []
+    Scanner(on_progress=lambda *a: calls.append(a), home=str(tmp_path))._step4_games_programs()
+
+    _, _, _, category, entries = calls[0]
+    assert category == "Games / Programs"
+    names = [e[0] for e in entries]
+    assert any("MyApp" in n for n in names)
+
+
+def test_scanner_step5_windows_system_runs():
+    # Just verify it completes and calls on_progress — real paths may or may not exist
+    calls = []
+    Scanner(on_progress=lambda *a: calls.append(a))._step5_windows_system()
+    assert len(calls) == 1
+    _, _, _, category, _ = calls[0]
+    assert category == "Windows System"

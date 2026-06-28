@@ -111,8 +111,55 @@ class Scanner:
                     self.report_lines.append(f"  {name}: {sz} GB")
         self.report_lines.append("")
         self._emit(3, "Scanning AppData caches...", "AppData Caches", entries)
-    def _step4_games_programs(self): pass
-    def _step5_windows_system(self): pass
+    def _step4_games_programs(self):
+        all_paths = (
+            [pathlib.Path(p) for p in GAME_PATHS_ABS]
+            + [self.home / p for p in GAME_PATHS_HOME]
+        )
+        entries = []
+        self.report_lines.append("=== Games / Installed Programs ===")
+        for base in all_paths:
+            if not base.exists():
+                continue
+            try:
+                subs = sorted(base.iterdir(), key=lambda p: p.name)
+            except PermissionError:
+                continue
+            total_sz = 0
+            sub_entries = []
+            for sub in subs:
+                if not sub.is_dir():
+                    continue
+                sz = get_folder_size(str(sub))
+                if sz > 0.5:
+                    sub_entries.append((f"  {sub.name}", f"{sz} GB"))
+                    total_sz += sz
+            if total_sz > 0.5:
+                entries.append((f"{base}  (Total: {round(total_sz, 1)} GB)", ""))
+                entries.extend(sub_entries)
+                self.report_lines.append(f"  {base} (Total: {round(total_sz, 1)} GB)")
+                for name, sz in sub_entries:
+                    self.report_lines.append(f"    - {name.strip()}: {sz}")
+        self.report_lines.append("")
+        self._emit(4, "Scanning games and programs...", "Games / Programs", entries)
+
+    def _step5_windows_system(self):
+        entries = []
+        self.report_lines.append("=== Windows System ===")
+        for label, path_str in [
+            ("Windows\\Temp",                    r"C:\Windows\Temp"),
+            ("Windows\\WinSxS (DISM cleanable)", r"C:\Windows\WinSxS"),
+            ("Windows\\Installer",               r"C:\Windows\Installer"),
+        ]:
+            p = pathlib.Path(path_str)
+            if p.exists():
+                sz = get_folder_size(str(p))
+                if sz > 0:
+                    entries.append((label, f"{sz} GB"))
+                    self.report_lines.append(f"  {path_str}: {sz} GB")
+        self.report_lines.append("")
+        self._emit(5, "Scanning Windows system folders...", "Windows System", entries)
+
     def _step6_node_modules(self): pass
     def _step7_downloads_recycle(self): pass
 
