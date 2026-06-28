@@ -111,6 +111,7 @@ class Scanner:
                     self.report_lines.append(f"  {name}: {sz} GB")
         self.report_lines.append("")
         self._emit(3, "Scanning AppData caches...", "AppData Caches", entries)
+
     def _step4_games_programs(self):
         all_paths = (
             [pathlib.Path(p) for p in GAME_PATHS_ABS]
