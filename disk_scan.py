@@ -227,8 +227,57 @@ class Scanner:
             f.write("\n".join(lines))
 
 
+def _report_path() -> str:
+    if getattr(sys, "frozen", False):
+        base = pathlib.Path(sys.executable).parent
+    else:
+        base = pathlib.Path(__file__).parent
+    return str(base / "disk_report.txt")
+
+
+class DiskScanApp:
+    def __init__(self, root: tk.Tk):
+        self.root = root
+        self.root.title("Disk Usage Scanner")
+        self.root.geometry("900x650")
+        self.root.minsize(600, 400)
+        self.scanner: "Scanner | None" = None
+        self._build_ui()
+
+    def _build_ui(self):
+        bar = tk.Frame(self.root, pady=6)
+        bar.pack(fill=tk.X, padx=10)
+
+        self.btn_scan = tk.Button(bar, text="Scan Now", width=12,
+                                  command=self._start_scan)
+        self.btn_scan.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.btn_save = tk.Button(bar, text="Save Report", width=12,
+                                  state=tk.DISABLED, command=self._save_report)
+        self.btn_save.pack(side=tk.LEFT)
+
+        prog_frame = tk.Frame(self.root, padx=10)
+        prog_frame.pack(fill=tk.X, pady=(0, 4))
+
+        self.progress = ttk.Progressbar(prog_frame, maximum=Scanner.STEPS,
+                                        mode="determinate")
+        self.progress.pack(fill=tk.X)
+
+        self.lbl_status = tk.Label(prog_frame, text="Press 'Scan Now' to begin.",
+                                   anchor="w")
+        self.lbl_status.pack(fill=tk.X)
+
+    def _start_scan(self):
+        pass  # wired up in Task 9
+
+    def _save_report(self):
+        pass  # wired up in Task 9
+
+
 def main():
-    pass  # UI added in Task 7
+    root = tk.Tk()
+    DiskScanApp(root)
+    root.mainloop()
 
 
 if __name__ == "__main__":
