@@ -1,0 +1,7 @@
+# PyInstaller build artifacts
+dist/
+build/
+__pycache__/
+
+# Reports
+disk_report.txt
