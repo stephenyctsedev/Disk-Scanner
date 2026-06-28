@@ -115,3 +115,37 @@ def test_scanner_step5_windows_system_runs():
     assert len(calls) == 1
     _, _, _, category, _ = calls[0]
     assert category == "Windows System"
+
+
+def test_scanner_step6_node_modules_found(tmp_path):
+    proj = tmp_path / "myproject"
+    nm = proj / "node_modules" / "some-pkg"
+    nm.mkdir(parents=True)
+    (nm / "index.js").write_bytes(b"x" * (10 * 1024 * 1024))  # 10 MB
+
+    calls = []
+    Scanner(on_progress=lambda *a: calls.append(a), home=str(tmp_path))._step6_node_modules()
+
+    _, _, _, category, entries = calls[0]
+    assert category == "node_modules"
+    assert len(entries) >= 1
+    assert any("node_modules" in e[0] for e in entries)
+
+
+def test_scanner_step7_downloads_top_files(tmp_path):
+    dl = tmp_path / "Downloads"
+    dl.mkdir()
+    for i in range(12):
+        (dl / f"file{i}.bin").write_bytes(b"x" * (i * 1024 * 1024))  # i MB each
+
+    calls = []
+    Scanner(on_progress=lambda *a: calls.append(a), home=str(tmp_path))._step7_downloads_recycle()
+
+    _, _, _, category, entries = calls[0]
+    assert category == "Downloads & Recycle Bin"
+    # At most 10 download entries + 1 Recycle Bin entry
+    download_entries = [e for e in entries if "Recycle" not in e[0]]
+    assert len(download_entries) <= 10
+    # Entries are sorted largest first
+    sizes = [float(e[1].replace(" GB", "")) for e in download_entries]
+    assert sizes == sorted(sizes, reverse=True)

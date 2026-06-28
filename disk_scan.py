@@ -160,8 +160,66 @@ class Scanner:
         self.report_lines.append("")
         self._emit(5, "Scanning Windows system folders...", "Windows System", entries)
 
-    def _step6_node_modules(self): pass
-    def _step7_downloads_recycle(self): pass
+    def _step6_node_modules(self):
+        nm_sizes = []
+        home_str = str(self.home)
+        try:
+            for dirpath, dirnames, _ in os.walk(home_str, onerror=lambda e: None):
+                rel = os.path.relpath(dirpath, home_str)
+                depth = 0 if rel == "." else rel.count(os.sep) + 1
+                if depth > 5:
+                    dirnames[:] = []
+                    continue
+                if "node_modules" in dirnames:
+                    nm_path = os.path.join(dirpath, "node_modules")
+                    nm_sizes.append((nm_path, get_folder_size(nm_path)))
+                    dirnames.remove("node_modules")  # don't descend into it
+        except Exception:
+            pass
+        nm_sizes.sort(key=lambda x: x[1], reverse=True)
+        entries = [(p, f"{sz} GB") for p, sz in nm_sizes[:5]]
+        self.report_lines.append("=== node_modules (top 5) ===")
+        for name, size in entries:
+            self.report_lines.append(f"  {name}: {size}")
+        self.report_lines.append("")
+        self._emit(6, "Scanning node_modules...", "node_modules", entries)
+
+    def _step7_downloads_recycle(self):
+        entries = []
+        self.report_lines.append("=== Downloads — Largest Files (top 10) ===")
+        dl = self.home / "Downloads"
+        if dl.exists():
+            files = []
+            for dirpath, _, filenames in os.walk(str(dl), onerror=lambda e: None):
+                for fname in filenames:
+                    fp = os.path.join(dirpath, fname)
+                    try:
+                        files.append((fname, os.path.getsize(fp)))
+                    except OSError:
+                        pass
+            files.sort(key=lambda x: x[1], reverse=True)
+            for name, size in files[:10]:
+                sz = round(size / (1024 ** 3), 2)
+                entries.append((name, f"{sz} GB"))
+                self.report_lines.append(f"  {name}: {sz} GB")
+        self.report_lines.append("")
+        self.report_lines.append("=== Recycle Bin ===")
+        rb_total = 0
+        try:
+            rb = pathlib.Path(r"C:\$Recycle.Bin")
+            if rb.exists():
+                for dirpath, _, filenames in os.walk(str(rb), onerror=lambda e: None):
+                    for fname in filenames:
+                        try:
+                            rb_total += os.path.getsize(os.path.join(dirpath, fname))
+                        except OSError:
+                            pass
+        except Exception:
+            pass
+        rb_gb = round(rb_total / (1024 ** 3), 2)
+        entries.append(("Recycle Bin", f"{rb_gb} GB"))
+        self.report_lines.append(f"  Recycle Bin: {rb_gb} GB")
+        self._emit(7, "Scanning Downloads and Recycle Bin...", "Downloads & Recycle Bin", entries)
 
 
 def main():
