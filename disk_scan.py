@@ -85,9 +85,32 @@ class Scanner:
             "",
         ]
 
-    # Stubs — replaced in Tasks 3-5
-    def _step2_user_folders(self): pass
-    def _step3_appdata_caches(self): pass
+    def _step2_user_folders(self):
+        folders = ["Downloads", "Desktop", "Documents", "Videos",
+                   "Pictures", "Music", "OneDrive"]
+        entries = []
+        self.report_lines.append("=== User Folders ===")
+        for name in folders:
+            path = self.home / name
+            if path.exists():
+                sz = get_folder_size(str(path))
+                entries.append((name, f"{sz} GB"))
+                self.report_lines.append(f"  {name}: {sz} GB")
+        self.report_lines.append("")
+        self._emit(2, "Scanning user folders...", "User Folders", entries)
+
+    def _step3_appdata_caches(self):
+        entries = []
+        self.report_lines.append("=== AppData Caches ===")
+        for name, subpath in APPDATA_PATHS:
+            path = self.home / subpath
+            if path.exists():
+                sz = get_folder_size(str(path))
+                if sz > 0.1:
+                    entries.append((name, f"{sz} GB"))
+                    self.report_lines.append(f"  {name}: {sz} GB")
+        self.report_lines.append("")
+        self._emit(3, "Scanning AppData caches...", "AppData Caches", entries)
     def _step4_games_programs(self): pass
     def _step5_windows_system(self): pass
     def _step6_node_modules(self): pass

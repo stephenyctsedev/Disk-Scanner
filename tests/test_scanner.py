@@ -55,3 +55,37 @@ def test_scanner_step1_populates_report():
     report = "\n".join(scanner.report_lines)
     assert "C: Disk Usage Report" in report
     assert "Total:" in report
+
+
+def test_scanner_step2_user_folders(tmp_path):
+    (tmp_path / "Downloads").mkdir()
+    (tmp_path / "Downloads" / "file.bin").write_bytes(b"x" * (10 * 1024 * 1024))
+    (tmp_path / "Desktop").mkdir()  # empty — still reported
+
+    calls = []
+    Scanner(on_progress=lambda *a: calls.append(a), home=str(tmp_path))._step2_user_folders()
+
+    _, _, _, category, entries = calls[0]
+    assert category == "User Folders"
+    names = [e[0] for e in entries]
+    assert "Downloads" in names
+    assert "Desktop" in names
+    sizes = {e[0]: e[1] for e in entries}
+    assert sizes["Downloads"] == "0.01 GB"
+    assert sizes["Desktop"] == "0.0 GB"
+
+
+def test_scanner_step3_appdata_skips_small(tmp_path):
+    appdata = tmp_path / "AppData" / "Local"
+    appdata.mkdir(parents=True)
+    # 0.05 GB < threshold 0.1 GB — should be excluded
+    (appdata / "tiny.bin").write_bytes(b"x" * int(0.05 * 1024 ** 3))
+
+    calls = []
+    Scanner(on_progress=lambda *a: calls.append(a), home=str(tmp_path))._step3_appdata_caches()
+
+    _, _, _, category, entries = calls[0]
+    assert category == "AppData Caches"
+    # AppData Local (total) threshold is 0.1 GB — tiny file is below it
+    names = [e[0] for e in entries]
+    assert "AppData Local (total)" not in names
