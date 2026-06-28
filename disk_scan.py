@@ -296,10 +296,36 @@ class DiskScanApp:
             self.tree.insert(parent, tk.END, text=name, values=(size,))
 
     def _start_scan(self):
-        pass  # wired up in Task 9
+        self.tree.delete(*self.tree.get_children())
+        self._category_nodes.clear()
+        self.progress["value"] = 0
+        self.lbl_status.config(text="Starting scan...")
+        self.btn_scan.config(state=tk.DISABLED)
+        self.btn_save.config(state=tk.DISABLED)
+        self.scanner = Scanner(on_progress=self._on_progress)
+        threading.Thread(target=self._run_scan, daemon=True).start()
+
+    def _run_scan(self):
+        self.scanner.run()
+        self.root.after(0, self._on_scan_complete)
+
+    def _on_progress(self, step, total, label, category, entries):
+        self.root.after(0, self._update_ui, step, total, label, category, entries)
+
+    def _on_scan_complete(self):
+        self.lbl_status.config(text="Scan complete!")
+        self.btn_scan.config(state=tk.NORMAL)
+        self.btn_save.config(state=tk.NORMAL)
 
     def _save_report(self):
-        pass  # wired up in Task 9
+        if self.scanner is None:
+            return
+        path = _report_path()
+        try:
+            self.scanner.write_report(path)
+            messagebox.showinfo("Saved", f"Report saved to:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not save report:\n{e}")
 
 
 def main():
