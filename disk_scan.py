@@ -267,6 +267,34 @@ class DiskScanApp:
                                    anchor="w")
         self.lbl_status.pack(fill=tk.X)
 
+        tree_frame = tk.Frame(self.root)
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+
+        self.tree = ttk.Treeview(tree_frame, columns=("size",),
+                                 show="tree headings")
+        self.tree.heading("#0", text="Name", anchor=tk.W)
+        self.tree.heading("size", text="Size", anchor=tk.E)
+        self.tree.column("#0", stretch=True, minwidth=400)
+        self.tree.column("size", width=100, anchor=tk.E, stretch=False)
+
+        scroll = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL,
+                               command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scroll.set)
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self._category_nodes: dict[str, str] = {}
+
+    def _update_ui(self, step: int, total: int, label: str,
+                   category: str, entries: list) -> None:
+        self.progress["value"] = step
+        self.lbl_status.config(text=f"Step {step}/{total}: {label}")
+        parent = self.tree.insert("", tk.END, text=category,
+                                  open=(step == 1))
+        self._category_nodes[category] = parent
+        for name, size in entries:
+            self.tree.insert(parent, tk.END, text=name, values=(size,))
+
     def _start_scan(self):
         pass  # wired up in Task 9
 
