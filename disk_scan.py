@@ -221,6 +221,11 @@ class Scanner:
         self.report_lines.append(f"  Recycle Bin: {rb_gb} GB")
         self._emit(7, "Scanning Downloads and Recycle Bin...", "Downloads & Recycle Bin", entries)
 
+    def write_report(self, path: str) -> None:
+        lines = self.report_lines + ["", f"Scan complete! Report saved to: {path}"]
+        with open(path, "w", encoding="utf-8", errors="replace") as f:
+            f.write("\n".join(lines))
+
 
 def main():
     pass  # UI added in Task 7

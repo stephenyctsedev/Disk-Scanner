@@ -149,3 +149,13 @@ def test_scanner_step7_downloads_top_files(tmp_path):
     # Entries are sorted largest first
     sizes = [float(e[1].replace(" GB", "")) for e in download_entries]
     assert sizes == sorted(sizes, reverse=True)
+
+
+def test_scanner_write_report(tmp_path):
+    scanner = Scanner(on_progress=lambda *a: None)
+    scanner._step1_disk_info()  # populate report_lines
+    report_file = tmp_path / "disk_report.txt"
+    scanner.write_report(str(report_file))
+    content = report_file.read_text(encoding="utf-8")
+    assert "C: Disk Usage Report" in content
+    assert "Scan complete" in content
