@@ -16,7 +16,7 @@ python disk_scan.py
 
 1. C: drive total / used / free
 2. User folders — Downloads, Desktop, Documents, Videos, Pictures, Music, OneDrive
-3. AppData caches — npm, pip, Conda, Chrome, Discord, Spotify, Teams, NVIDIA DXCache, Ollama, Cursor
+3. AppData caches — AppData Local (total), AppData Roaming, npm, pip, Conda, Chrome, Discord, Spotify, Teams, NVIDIA DXCache, Ollama, Cursor
 4. Games / programs — Program Files, C:\Games, Epic Games, Riot Games, SteamLibrary
 5. Windows system — Temp, WinSxS, Installer
 6. node_modules — top 5 largest found within home directory (max depth 5)
@@ -31,4 +31,4 @@ Output: `dist\DiskScan.exe`
 
 ## Report
 
-After scanning, click **Save Report** to write `disk_report.txt` next to the EXE (or script when running from source).
+After scanning, click **Save Report**. Saves as `disk_report.txt` next to the EXE (or script when running from source).
